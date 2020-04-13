@@ -1,0 +1,14 @@
+.vscode
+
+# CMake artifacts
+CMakeFiles
+CMakeCache.txt
+CTestTestfile.cmake
+*.tcl
+Makefile
+Temporary
+cmake_install.cmake
+
+# Unit test executables
+run_utest_*.*
+run_utest_*

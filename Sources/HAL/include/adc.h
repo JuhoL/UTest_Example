@@ -17,14 +17,14 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    supervisor.h
+//! @file    adc.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    13 Apr 2020
+//! @date    18 Apr 2020
 //! 
-//! @brief   This is an example of a voltage supervisor module.
+//! @brief   This is an simplified example of an ADC module.
 
-#ifndef SUPERVISOR_H
-#define SUPERVISOR_H
+#ifndef ADC_H
+#define ADC_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
@@ -33,23 +33,49 @@
 #include "types.h"
 
 //-----------------------------------------------------------------------------------------------------------------------------
+// Typedefs
+//-----------------------------------------------------------------------------------------------------------------------------
+
+/// @brief A function pointer type for ADC callbacks.
+/// Parameter is the ADC result.
+typedef void (*AdcCallback_t)(uint16_t);
+
+/// @brief An ADC channel enum
+typedef enum
+{
+    ADC0 = 0,   //!< ADC channel 0
+    ADC1,       //!< ADC channel 1
+    ADC2        //!< ADC channel 2
+} AdcChannel_t;
+
+/// @brief ADC channel resolution
+typedef enum
+{
+    ADC_RES_12_BIT = 0, //!< 12-bit resolution
+    ADC_RES_10_BIT,     //!< 10-bit resolution
+    ADC_RES_8_BIT       //!< 8-bit resolution
+} AdcResolution_t;
+
+/// @brief ADC configuration struct
+typedef struct
+{
+    AdcChannel_t channel;       //!< A channel selector
+    AdcResolution_t resolution; //!< A channel resolution
+    AdcCallback_t Callback;     //!< A callback for passing results.
+} AdcConfig_t;
+
+//-----------------------------------------------------------------------------------------------------------------------------
 // Function Prototypes
 //-----------------------------------------------------------------------------------------------------------------------------
 
-/// @brief This function initialises the supervisor module.
+/// @brief This function initialises an ADC channel based on the configuration struct.
+/// @param pConfig - A pointer to the configuration struct.
 /// @return Returns a corresponding error code. See types.h.
-Error_t Supervisor_Init(void);
+Error_t HalAdc_Init(const AdcConfig_t* pConfig);
 
-/// @brief This function starts the voltage supervision.
+/// @brief This function starts a conversion of a given channel.
+/// @param channel - A channel to convert.
 /// @return Returns a corresponding error code. See types.h.
-Error_t Supervisor_Start(void);
+Error_t HalAdc_StartConversion(AdcChannel_t channel);
 
-/// @brief This function stops the voltage supervision.
-/// @return Returns a corresponding error code. See types.h.
-Error_t Supervisor_Stop(void);
-
-/// @brief This function is used to read the latest voltage measurement.
-/// @return Returns the lates voltage in resolution of 0.01.
-uint16_t Supervisor_GetVoltage(void);
-
-#endif // SUPERVISOR_H
+#endif // ADC_H

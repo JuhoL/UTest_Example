@@ -17,38 +17,40 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    types.h
+//! @file    adc_mock.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    13 Apr 2020
+//! @date    18 Apr 2020
 //! 
-//! @brief   This is a generic type header.
+//! @brief   This is an example of an ADC module mocks.
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef ADC_MOCK_H
+#define ADC_MOCK_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "fff.h"
 
-#ifdef UNIT_TEST
-    // When unit testing provide static functions and variables a global scope.
-    #define staticf
-    #define staticv
-#else
-    #define staticf static
-    #define staticv static
-#endif
+extern "C" {
+#include "adc.h"
+}
 
-typedef enum
-{
-    ERROR_OK = 0,
-    ERROR_RESOURCE_NOT_AVAILABLE,
-    ERROR_NOT_ENOUGH_RESOURCES,
-    ERROR_INVALID_ACTION,
-    ERROR_PERIPHERAL_FAILURE
-} Error_t;
+//-----------------------------------------------------------------------------------------------------------------------------
+// Function Mocks
+//-----------------------------------------------------------------------------------------------------------------------------
 
-#endif // TYPES_H
+FAKE_VALUE_FUNC(Error_t, HalAdc_Init, const AdcConfig_t*);
+FAKE_VALUE_FUNC(Error_t, HalAdc_StartConversion, AdcChannel_t);
+
+//-----------------------------------------------------------------------------------------------------------------------------
+// Helper Macros
+//-----------------------------------------------------------------------------------------------------------------------------
+
+#define ADC_MOCK_RESET() \
+{ \
+    RESET_FAKE(HalAdc_Init); \
+    RESET_FAKE(HalAdc_StartConversion); \
+}
+
+#endif // ADC_MOCK_H

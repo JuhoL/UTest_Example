@@ -17,38 +17,41 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    types.h
+//! @file    scheduler.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
 //! @date    13 Apr 2020
 //! 
-//! @brief   This is a generic type header.
+//! @brief   This is an example of a scheduler module.
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef SCHEDULER_H
+#define SCHEDULER_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "types.h"
 
-#ifdef UNIT_TEST
-    // When unit testing provide static functions and variables a global scope.
-    #define staticf
-    #define staticv
-#else
-    #define staticf static
-    #define staticv static
-#endif
+//-----------------------------------------------------------------------------------------------------------------------------
+// Typedefs
+//-----------------------------------------------------------------------------------------------------------------------------
 
-typedef enum
-{
-    ERROR_OK = 0,
-    ERROR_RESOURCE_NOT_AVAILABLE,
-    ERROR_NOT_ENOUGH_RESOURCES,
-    ERROR_INVALID_ACTION,
-    ERROR_PERIPHERAL_FAILURE
-} Error_t;
+/// @brief A function pointer type for tasks.
+typedef void (*Task_t)(void);
 
-#endif // TYPES_H
+//-----------------------------------------------------------------------------------------------------------------------------
+// Function Prototypes
+//-----------------------------------------------------------------------------------------------------------------------------
+
+/// @brief This function creates a task for given function pointer.
+/// @param Task - A task function.
+/// @param interval - Task call interval in milliseconds.
+/// @return Returns a corresponding error code. See types.h.
+Error_t Scheduler_CreateTask(Task_t Task, uint16_t interval);
+
+/// @brief This function deletes a task of given function pointer.
+/// @param Task - A task function to be removed from execution.
+/// @return Returns a corresponding error code. See types.h.
+Error_t Scheduler_DeleteTask(Task_t Task);
+
+#endif // SCHEDULER_H

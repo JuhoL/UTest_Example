@@ -17,38 +17,49 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    types.h
+//! @file    system.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    13 Apr 2020
+//! @date    18 Apr 2020
 //! 
-//! @brief   This is a generic type header.
+//! @brief   This is an example of a system module.
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef SYSTEM_H
+#define SYSTEM_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
-// Include Dependencies
+// Typedefs
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <stdbool.h>
-
-#ifdef UNIT_TEST
-    // When unit testing provide static functions and variables a global scope.
-    #define staticf
-    #define staticv
-#else
-    #define staticf static
-    #define staticv static
-#endif
+/// @brief A function pointer type for tasks.
+typedef enum
+{
+    SUPERVISOR_FAILURE = 0
+} SystemErrorFlag_t;
 
 typedef enum
 {
-    ERROR_OK = 0,
-    ERROR_RESOURCE_NOT_AVAILABLE,
-    ERROR_NOT_ENOUGH_RESOURCES,
-    ERROR_INVALID_ACTION,
-    ERROR_PERIPHERAL_FAILURE
-} Error_t;
+    UNDER_VOLTAGE_WARNING = 0,
+    OVER_VOLTAGE_WARNING
+} SystemWarningFlag_t;
 
-#endif // TYPES_H
+//-----------------------------------------------------------------------------------------------------------------------------
+// Function Prototypes
+//-----------------------------------------------------------------------------------------------------------------------------
+
+/// @brief This function raises a system error flag.
+/// @param flag - Error flag to raise.
+void System_RaiseError(SystemErrorFlag_t flag);
+
+/// @brief This function clears a system error flag.
+/// @param flag - Error flag to clear.
+void System_ClearError(SystemErrorFlag_t flag);
+
+/// @brief This function raises a system warning flag.
+/// @param flag - Warning flag to raise.
+void System_RaiseWarning(SystemWarningFlag_t flag);
+
+/// @brief This function clears a system warning flag.
+/// @param flag - Warning flag to clear.
+void System_ClearWarning(SystemWarningFlag_t flag);
+
+#endif // SYSTEM_H

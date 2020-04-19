@@ -17,38 +17,44 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    types.h
+//! @file    system_mock.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    13 Apr 2020
+//! @date    18 Apr 2020
 //! 
-//! @brief   This is a generic type header.
+//! @brief   This is an example of an system module mocks.
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef SYSTEM_MOCK_H
+#define SYSTEM_MOCK_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "fff.h"
 
-#ifdef UNIT_TEST
-    // When unit testing provide static functions and variables a global scope.
-    #define staticf
-    #define staticv
-#else
-    #define staticf static
-    #define staticv static
-#endif
+extern "C" {
+#include "system.h"
+}
 
-typedef enum
-{
-    ERROR_OK = 0,
-    ERROR_RESOURCE_NOT_AVAILABLE,
-    ERROR_NOT_ENOUGH_RESOURCES,
-    ERROR_INVALID_ACTION,
-    ERROR_PERIPHERAL_FAILURE
-} Error_t;
+//-----------------------------------------------------------------------------------------------------------------------------
+// Function Mocks
+//-----------------------------------------------------------------------------------------------------------------------------
 
-#endif // TYPES_H
+FAKE_VOID_FUNC(System_RaiseError, SystemErrorFlag_t);
+FAKE_VOID_FUNC(System_ClearError, SystemErrorFlag_t);
+FAKE_VOID_FUNC(System_RaiseWarning, SystemWarningFlag_t);
+FAKE_VOID_FUNC(System_ClearWarning, SystemWarningFlag_t);
+
+//-----------------------------------------------------------------------------------------------------------------------------
+// Helper Macros
+//-----------------------------------------------------------------------------------------------------------------------------
+
+#define SYSTEM_MOCK_RESET() \
+{ \
+    RESET_FAKE(System_RaiseError); \
+    RESET_FAKE(System_ClearError); \
+    RESET_FAKE(System_RaiseWarning); \
+    RESET_FAKE(System_ClearWarning); \
+}
+
+#endif // SYSTEM_MOCK_H

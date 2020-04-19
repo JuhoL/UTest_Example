@@ -1,4 +1,4 @@
 #!/bin/bash
 cmake .
 cmake --build .
-make test
+ctest --output-on-failure

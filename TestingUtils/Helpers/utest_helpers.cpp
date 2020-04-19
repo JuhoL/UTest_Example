@@ -17,38 +17,33 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    types.h
+//! @file    utest_helpers.cpp
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    13 Apr 2020
+//! @date    18 Apr 2020
 //! 
-//! @brief   This is a generic type header.
-
-#ifndef TYPES_H
-#define TYPES_H
+//! @brief   These are helper functions for unit tests.
 
 //-----------------------------------------------------------------------------------------------------------------------------
-// Include Dependencies
+// Includes
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "utest_helpers.hpp"
+#include <stdlib.h>
+#include <time.h>
 
-#ifdef UNIT_TEST
-    // When unit testing provide static functions and variables a global scope.
-    #define staticf
-    #define staticv
-#else
-    #define staticf static
-    #define staticv static
-#endif
+//-----------------------------------------------------------------------------------------------------------------------------
+// Function Definitions
+//-----------------------------------------------------------------------------------------------------------------------------
 
-typedef enum
+void UTestHelper_InitRandom(void)
 {
-    ERROR_OK = 0,
-    ERROR_RESOURCE_NOT_AVAILABLE,
-    ERROR_NOT_ENOUGH_RESOURCES,
-    ERROR_INVALID_ACTION,
-    ERROR_PERIPHERAL_FAILURE
-} Error_t;
+    srand(time(NULL));
+    return;
+}
 
-#endif // TYPES_H
+int UTestHelper_GetRandomInt(int min, int max)
+{
+    int range = max - min;
+    int random = rand() % range;
+    return random + min;
+}

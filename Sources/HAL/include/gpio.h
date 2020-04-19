@@ -17,38 +17,23 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    types.h
+//! @file    gpio.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    13 Apr 2020
+//! @date    18 Apr 2020
 //! 
-//! @brief   This is a generic type header.
+//! @brief   This is an example of an GPIO module.
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef GPIO_H
+#define GPIO_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "types.h"
 
-#ifdef UNIT_TEST
-    // When unit testing provide static functions and variables a global scope.
-    #define staticf
-    #define staticv
-#else
-    #define staticf static
-    #define staticv static
-#endif
+//-----------------------------------------------------------------------------------------------------------------------------
+// Function Prototypes
+//-----------------------------------------------------------------------------------------------------------------------------
 
-typedef enum
-{
-    ERROR_OK = 0,
-    ERROR_RESOURCE_NOT_AVAILABLE,
-    ERROR_NOT_ENOUGH_RESOURCES,
-    ERROR_INVALID_ACTION,
-    ERROR_PERIPHERAL_FAILURE
-} Error_t;
-
-#endif // TYPES_H
+#endif // GPIO_H

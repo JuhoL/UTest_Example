@@ -23,4 +23,4 @@ If you build in Windows, you can build manually with CMake:
 * Navigate to UTest directory
 * Initialize CMake project: `cmake .`
 * Build the project: `cmake --build .`
-* Run the tests: `make test`
+* Run the tests: `ctest --output-on-failure`

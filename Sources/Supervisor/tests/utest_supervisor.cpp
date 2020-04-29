@@ -41,6 +41,7 @@ extern "C" {
 
 // Mocks
 #include "adc_mock.h"
+#include "gpio_mock.h"
 #include "scheduler_mock.h"
 #include "system_mock.h"
 
@@ -50,7 +51,7 @@ extern "C" {
 
 int main(int argc, char* argv[])
 {
-    UTestHelper_InitRandom();
+    UTestHelper::InitRandom();
     int result = Catch::Session().run(argc, argv);
     return result;
 }
@@ -60,14 +61,19 @@ int main(int argc, char* argv[])
 //-----------------------------------------------------------------------------------------------------------------------------
 
 extern "C" {
+
+extern const GpioPin_t alarmPin;
 extern bool isInitialised;
 extern uint8_t samples;
 extern uint16_t sampleSum;
 extern uint16_t voltage;
+extern bool uvIsActive;
+extern bool ovIsActive;
 
 extern void Supervisor_AdcCallback(uint16_t result);
 extern void Supervisor_Task(void);
 extern uint16_t Supervisor_AdcToVoltage(uint16_t adc);
+
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------
@@ -75,13 +81,25 @@ extern uint16_t Supervisor_AdcToVoltage(uint16_t adc);
 //-----------------------------------------------------------------------------------------------------------------------------
 
 static AdcConfig_t adcConfig;
+static GpioConfig_t gpioConfig;
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Custom Fake Prototypes
 //-----------------------------------------------------------------------------------------------------------------------------
 
-/// @brief A custom fake for HalAdc_Init().
-static Error_t HalAdc_Init_CustomFake(const AdcConfig_t* pConfig);
+/// @brief A custom fake for HalAdc_SetConfiguration().
+static void HalAdc_SetConfiguration_CustomFake(const AdcConfig_t* pConfig);
+
+/// @brief A custom fake for HalGpio_SetConfiguration().
+static void HalGpio_SetConfiguration_CustomFake(const GpioConfig_t* pConfig);
+
+//-----------------------------------------------------------------------------------------------------------------------------
+// Helper Functions
+//-----------------------------------------------------------------------------------------------------------------------------
+
+/// @brief This helper function sets the supervision voltage to a given value by calling Supervisor_AdcCallback() repeatedly.
+/// @param voltage - An voltage value to set in 0.01 resolution.
+static void Helper_SetVoltage(uint32_t voltage);
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Test Cases
@@ -91,7 +109,10 @@ SCENARIO ("Supervisor module is initialised", "[supervisor]")
 {
     INIT_MOCKS();
     ADC_MOCK_RESET();
-    MOCK_SET_CUSTOM_FAKE(HalAdc_Init, HalAdc_Init_CustomFake);
+    GPIO_MOCK_RESET();
+    
+    MOCK_SET_CUSTOM_FAKE(HalAdc_SetConfiguration, HalAdc_SetConfiguration_CustomFake);
+    MOCK_SET_CUSTOM_FAKE(HalGpio_SetConfiguration, HalGpio_SetConfiguration_CustomFake);
 
     GIVEN ("the module is not initialised")
     {
@@ -99,54 +120,32 @@ SCENARIO ("Supervisor module is initialised", "[supervisor]")
 
         WHEN ("the supervisor is initialised")
         {
-            Error_t error = Supervisor_Init();
+            Supervisor_Init();
 
-            THEN ("no errors shall occur")
+            THEN ("the initialised flag shall be set")
             {
-                REQUIRE (error == ERROR_OK);
+                REQUIRE (isInitialised == true);
 
-                AND_THEN ("the initialised flag shall be set")
+                AND_THEN ("the ADC shall be configured")
                 {
-                    REQUIRE (isInitialised == true);
+                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(HalAdc_SetConfiguration));
+                    REQUIRE (MOCK_CALLS(HalAdc_SetConfiguration) == 1);
 
-                    AND_THEN ("the ADC shall be configured")
+                    REQUIRE (adcConfig.channel == ADC1);
+                    REQUIRE (adcConfig.resolution == ADC_RES_12_BIT);
+                    REQUIRE (adcConfig.Callback == Supervisor_AdcCallback);
+
+                    AND_THEN ("the alarm GPIO shall be configured")
                     {
-                        REQUIRE (MOCK_CALLS(HalAdc_Init) == 1);
-                        REQUIRE (MOCK_IS_CALLED_AT_POSITION(HalAdc_Init, 0));
+                        REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(HalGpio_SetConfiguration));
+                        REQUIRE (MOCK_CALLS(HalGpio_SetConfiguration) == 1);
 
-                        REQUIRE (adcConfig.channel == ADC1);
-                        REQUIRE (adcConfig.resolution == ADC_RES_12_BIT);
-                        REQUIRE (adcConfig.Callback == Supervisor_AdcCallback);
-                    }
-                }
-            }
-        }
-    }
-}
-
-SCENARIO ("Supervisor module initialisation fails", "[supervisor][error_handling]")
-{
-    ADC_MOCK_RESET();
-
-    GIVEN ("the module is not initialised")
-    {
-        isInitialised = false;
-    
-        AND_GIVEN ("HalAdc_Init() is failing")
-        {
-            MOCK_SET_RETURN_VALUE(HalAdc_Init, ERROR_RESOURCE_NOT_AVAILABLE);
-
-            WHEN ("the supervisor is initialised")
-            {
-                Error_t error = Supervisor_Init();
-
-                THEN ("the error shall propagate")
-                {
-                    REQUIRE (error == ERROR_RESOURCE_NOT_AVAILABLE);
-
-                    AND_THEN ("the initialised flag shall not be set")
-                    {
-                        REQUIRE (isInitialised == false);
+                        REQUIRE (gpioConfig.pin.port == portC);
+                        REQUIRE (gpioConfig.pin.number == 5U);
+                        REQUIRE (gpioConfig.mode == output);
+                        REQUIRE (gpioConfig.isOpenDrain == true);
+                        REQUIRE (gpioConfig.speed == low);
+                        REQUIRE (gpioConfig.pull == floating);
                     }
                 }
             }
@@ -315,7 +314,7 @@ SCENARIO ("Supervision voltage is read", "[supervisor]")
 {
     GIVEN ("there is a random voltage detected")
     {
-        voltage = (uint16_t)UTestHelper_GetRandomInt(5000, 20000);
+        voltage = (uint16_t)UTestHelper::GetRandomInt(5000, 20000);
 
         WHEN ("the voltage is read")
         {
@@ -451,12 +450,189 @@ TEST_CASE ("Samples are filtered and voltage updated", "[supervisor]")
     REQUIRE (voltage == 1195U);
 }
 
+TEST_CASE ("Alarm GPIO pin is correct", "[supervisor]")
+{
+    REQUIRE (alarmPin.port == portC);
+    REQUIRE (alarmPin.number == 5U);
+}
+
+TEST_CASE ("Undervoltage detection and recovery", "[supervisor]")
+{
+    INIT_MOCKS();
+    SYSTEM_MOCK_RESET();
+    GPIO_MOCK_RESET();
+
+    // Initialise sampling and state
+    samples = 0U;
+    sampleSum = 0U;
+    voltage = 0U;
+    uvIsActive = false;
+    ovIsActive = false;
+
+    // Voltage reaches 10.50V
+    Helper_SetVoltage(1050U);
+
+    // No warnings shall trigger
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 0);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 0);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 0);
+
+    // Voltage reaches 10.49V
+    Helper_SetVoltage(1049U);
+
+    // Undervoltage warning shall trigger
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 1);
+    REQUIRE (MOCK_LAST_ARG(System_RaiseWarning, 0) == UNDERVOLTAGE_WARNING);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 0);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 1);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 0) == &alarmPin);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 1) == true);
+
+    // Voltage rises to 10.99V
+    Helper_SetVoltage(1099U);
+
+    // There shall be no changes in warning flags.
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 1);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 0);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 1);
+
+    // Voltage reaches 11.00V
+    Helper_SetVoltage(1100U);
+
+    // Undervoltage warning shall be cleared
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 1);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 1);
+    REQUIRE (MOCK_LAST_ARG(System_ClearWarning, 0) == UNDERVOLTAGE_WARNING);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 2);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 0) == &alarmPin);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 1) == false);
+}
+
+TEST_CASE ("Overvoltage detection and recovery", "[supervisor]")
+{
+    INIT_MOCKS();
+    SYSTEM_MOCK_RESET();
+    GPIO_MOCK_RESET();
+
+    // Initialise sampling and state
+    samples = 0U;
+    sampleSum = 0U;
+    voltage = 0U;
+    uvIsActive = false;
+    ovIsActive = false;
+
+    // Voltage reaches 13.50V
+    Helper_SetVoltage(1350U);
+
+    // No warnings shall trigger
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 0);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 0);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 0);
+
+    // Voltage reaches 13.51V
+    Helper_SetVoltage(1351U);
+
+    // Overvoltage warning shall trigger
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 1);
+    REQUIRE (MOCK_LAST_ARG(System_RaiseWarning, 0) == OVERVOLTAGE_WARNING);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 0);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 1);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 0) == &alarmPin);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 1) == true);
+
+    // Voltage lowers to 13.01V
+    Helper_SetVoltage(1301U);
+
+    // There shall be no changes in warning flags.
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 1);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 0);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 1);
+
+    // Voltage reaches 13.00V
+    Helper_SetVoltage(1300U);
+
+    // Overvoltage warning shall be cleared
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 1);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 1);
+    REQUIRE (MOCK_LAST_ARG(System_ClearWarning, 0) == OVERVOLTAGE_WARNING);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 2);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 0) == &alarmPin);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 1) == false);
+}
+
+TEST_CASE ("Mixture of overvoltages and undervoltages", "[supervisor]")
+{
+    INIT_MOCKS();
+    SYSTEM_MOCK_RESET();
+    GPIO_MOCK_RESET();
+
+    // Initialise sampling and state
+    samples = 0U;
+    sampleSum = 0U;
+    voltage = 0U;
+    uvIsActive = false;
+    ovIsActive = false;
+
+    // Voltage reaches 14.00V
+    Helper_SetVoltage(1400U);
+
+    // Overvoltage warning shall trigger
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 1);
+    REQUIRE (MOCK_LAST_ARG(System_RaiseWarning, 0) == OVERVOLTAGE_WARNING);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 0);
+    REQUIRE (MOCK_CALLS(HalGpio_SetOutputState) == 1);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 0) == &alarmPin);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 1) == true);
+
+    // Voltage drops to 10.00V
+    Helper_SetVoltage(1000U);
+
+    // Overvoltage warning shall clear and undervoltage shall trigger
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 2);
+    REQUIRE (MOCK_LAST_ARG(System_RaiseWarning, 0) == UNDERVOLTAGE_WARNING);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 1);
+    REQUIRE (MOCK_LAST_ARG(System_ClearWarning, 0) == OVERVOLTAGE_WARNING);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 0) == &alarmPin);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 1) == true);
+
+    // Voltage jumps back to 14.00V
+    Helper_SetVoltage(1400U);
+
+    // Overvoltage warning shall trigger and undervoltage shall clear
+    REQUIRE (MOCK_CALLS(System_RaiseWarning) == 3);
+    REQUIRE (MOCK_LAST_ARG(System_RaiseWarning, 0) == OVERVOLTAGE_WARNING);
+    REQUIRE (MOCK_CALLS(System_ClearWarning) == 2);
+    REQUIRE (MOCK_LAST_ARG(System_ClearWarning, 0) == UNDERVOLTAGE_WARNING);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 0) == &alarmPin);
+    REQUIRE (MOCK_LAST_ARG(HalGpio_SetOutputState, 1) == true);
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 // Custom Fake Definitions
 //-----------------------------------------------------------------------------------------------------------------------------
 
-static Error_t HalAdc_Init_CustomFake(const AdcConfig_t* pConfig)
+static void HalAdc_SetConfiguration_CustomFake(const AdcConfig_t* pConfig)
 {
     adcConfig = *pConfig;
-    return ERROR_OK;
+    return;
+}
+
+static void HalGpio_SetConfiguration_CustomFake(const GpioConfig_t* pConfig)
+{
+    gpioConfig = *pConfig;
+    return;
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+// Helper Functions
+//-----------------------------------------------------------------------------------------------------------------------------
+
+static void Helper_SetVoltage(uint32_t voltage)
+{
+    uint16_t adc = (uint16_t)((voltage * 0xFFFUL + 1000UL) / 2000UL);
+    for (int i = 0; i < 10; ++i)
+    {
+        Supervisor_AdcCallback(adc);
+    }
+    return;
 }

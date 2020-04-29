@@ -17,64 +17,46 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    adc.h
+//! @file    hal_mock.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
 //! @date    18 Apr 2020
 //! 
-//! @brief   This is an simplified example of an ADC module.
+//! @brief   This is an example of an HAL module mocks.
 
-#ifndef ADC_H
-#define ADC_H
+#ifndef HAL_MOCK_H
+#define HAL_MOCK_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include "types.h"
+#include "fff.h"
+
+extern "C" {
+#include "hal.h"
+}
 
 //-----------------------------------------------------------------------------------------------------------------------------
-// Typedefs
+// Function Mocks
 //-----------------------------------------------------------------------------------------------------------------------------
 
-/// @brief A function pointer type for ADC callbacks.
-/// Parameter is the ADC result.
-typedef void (*AdcCallback_t)(uint16_t);
-
-/// @brief An ADC channel enum
-typedef enum
-{
-    ADC0 = 0,   //!< ADC channel 0
-    ADC1,       //!< ADC channel 1
-    ADC2        //!< ADC channel 2
-} AdcChannel_t;
-
-/// @brief ADC channel resolution
-typedef enum
-{
-    ADC_RES_12_BIT = 0, //!< 12-bit resolution
-    ADC_RES_10_BIT,     //!< 10-bit resolution
-    ADC_RES_8_BIT       //!< 8-bit resolution
-} AdcResolution_t;
-
-/// @brief ADC configuration struct
-typedef struct
-{
-    AdcChannel_t channel;       //!< A channel selector
-    AdcResolution_t resolution; //!< A channel resolution
-    AdcCallback_t Callback;     //!< A callback for passing results.
-} AdcConfig_t;
+FAKE_VOID_FUNC(BitMock_Set, uint32_t*, uint32_t);
+FAKE_VOID_FUNC(BitMock_Clear, uint32_t*, uint32_t);
+FAKE_VALUE_FUNC(bool, BitMock_Get, uint32_t*, uint32_t);
+FAKE_VOID_FUNC(BitMock_SetBitfield, uint32_t*, uint32_t, uint32_t, uint32_t);
+FAKE_VALUE_FUNC(uint32_t, BitMock_GetBitfield, uint32_t*, uint32_t, uint32_t);
 
 //-----------------------------------------------------------------------------------------------------------------------------
-// Function Prototypes
+// Helper Macros
 //-----------------------------------------------------------------------------------------------------------------------------
 
-/// @brief This function initialises an ADC channel based on the configuration struct.
-/// @param pConfig - A pointer to the configuration struct.
-void HalAdc_SetConfiguration(const AdcConfig_t* pConfig);
+#define HAL_MOCK_RESET() \
+{ \
+    RESET_FAKE(BitMock_Set); \
+    RESET_FAKE(BitMock_Clear); \
+    RESET_FAKE(BitMock_Get); \
+    RESET_FAKE(BitMock_SetBitfield); \
+    RESET_FAKE(BitMock_GetBitfield); \
+}
 
-/// @brief This function starts a conversion of a given channel.
-/// @param channel - A channel to convert.
-/// @return Returns a corresponding error code. See types.h.
-Error_t HalAdc_StartConversion(AdcChannel_t channel);
-
-#endif // ADC_H
+#endif // HAL_MOCK_H

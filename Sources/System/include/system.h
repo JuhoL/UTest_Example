@@ -33,13 +33,14 @@
 /// @brief A function pointer type for tasks.
 typedef enum
 {
-    SUPERVISOR_FAILURE = 0
+    SUPERVISOR_FAILURE = 0,
+    HAL_GPIO_FAILURE
 } SystemErrorFlag_t;
 
 typedef enum
 {
-    UNDER_VOLTAGE_WARNING = 0,
-    OVER_VOLTAGE_WARNING
+    UNDERVOLTAGE_WARNING = 0,
+    OVERVOLTAGE_WARNING
 } SystemWarningFlag_t;
 
 //-----------------------------------------------------------------------------------------------------------------------------

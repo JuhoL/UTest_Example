@@ -22,6 +22,8 @@
 //! @date    13 Apr 2020
 //! 
 //! @brief   This is an example of a voltage supervisor module.
+//! The module monitors voltage of 12V line and raises a system level warning flag and pulls an alarm line low
+//! if the voltage is outside acceptable limits.
 
 #ifndef SUPERVISOR_H
 #define SUPERVISOR_H
@@ -37,8 +39,7 @@
 //-----------------------------------------------------------------------------------------------------------------------------
 
 /// @brief This function initialises the supervisor module.
-/// @return Returns a corresponding error code. See types.h.
-Error_t Supervisor_Init(void);
+void Supervisor_Init(void);
 
 /// @brief This function starts the voltage supervision.
 /// @return Returns a corresponding error code. See types.h.

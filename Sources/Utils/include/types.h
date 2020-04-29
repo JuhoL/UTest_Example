@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef UNIT_TEST
     // When unit testing provide static functions and variables a global scope.

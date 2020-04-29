@@ -17,64 +17,57 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    adc.h
+//! @file    hal.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    18 Apr 2020
+//! @date    13 Apr 2020
 //! 
-//! @brief   This is an simplified example of an ADC module.
+//! @brief   This is an example of a HAL interface.
 
-#ifndef ADC_H
-#define ADC_H
+#ifndef HAL_H
+#define HAL_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
 //-----------------------------------------------------------------------------------------------------------------------------
 
 #include "types.h"
+#ifdef UNIT_TEST
+    #include "stm32f429xx_mock.h"
+#else
+    #include "stm32f4xx.h"
+#endif
 
 //-----------------------------------------------------------------------------------------------------------------------------
-// Typedefs
+// Helper Macros
 //-----------------------------------------------------------------------------------------------------------------------------
 
-/// @brief A function pointer type for ADC callbacks.
-/// Parameter is the ADC result.
-typedef void (*AdcCallback_t)(uint16_t);
+#define BIT(position_)                      (1UL << (position_))
 
-/// @brief An ADC channel enum
-typedef enum
-{
-    ADC0 = 0,   //!< ADC channel 0
-    ADC1,       //!< ADC channel 1
-    ADC2        //!< ADC channel 2
-} AdcChannel_t;
+#ifdef UNIT_TEST
 
-/// @brief ADC channel resolution
-typedef enum
-{
-    ADC_RES_12_BIT = 0, //!< 12-bit resolution
-    ADC_RES_10_BIT,     //!< 10-bit resolution
-    ADC_RES_8_BIT       //!< 8-bit resolution
-} AdcResolution_t;
+extern void BitMock_Set(uint32_t* pRegister_, uint32_t bit_);
+extern void BitMock_Clear(uint32_t* pRegister_, uint32_t bit_);
+extern bool BitMock_Get(uint32_t* pRegister_, uint32_t bit_);
 
-/// @brief ADC configuration struct
-typedef struct
-{
-    AdcChannel_t channel;       //!< A channel selector
-    AdcResolution_t resolution; //!< A channel resolution
-    AdcCallback_t Callback;     //!< A callback for passing results.
-} AdcConfig_t;
+extern void BitMock_SetBitfield(uint32_t* pRegister_, uint32_t position_, uint32_t mask_, uint32_t pattern_);
+extern uint32_t BitMock_GetBitfield(uint32_t* pRegister_, uint32_t position_, uint32_t mask_);
 
-//-----------------------------------------------------------------------------------------------------------------------------
-// Function Prototypes
-//-----------------------------------------------------------------------------------------------------------------------------
+#define SET_BIT(register_, bit_)                                BitMock_Set(&(register_), (bit_))
+#define CLEAR_BIT(register_, bit_)                              BitMock_Clear(&(register_), (bit_))
+#define GET_BIT(register_, bit_)                                BitMock_Get(&(register_), (bit_))
 
-/// @brief This function initialises an ADC channel based on the configuration struct.
-/// @param pConfig - A pointer to the configuration struct.
-void HalAdc_SetConfiguration(const AdcConfig_t* pConfig);
+#define SET_BITFIELD(register_, position_, mask_, pattern_)     BitMock_SetBitfield(&(register_), (position_), (mask_), (pattern_))
+#define GET_BITFIELD(register_, position_, mask_)               BitMock_GetBitfield(&(register_), (position_), (mask_))
 
-/// @brief This function starts a conversion of a given channel.
-/// @param channel - A channel to convert.
-/// @return Returns a corresponding error code. See types.h.
-Error_t HalAdc_StartConversion(AdcChannel_t channel);
+#else
 
-#endif // ADC_H
+#define SET_BIT(register_, bit_)                                {(register_) |= BIT(bit_);}
+#define CLEAR_BIT(register_, bit_)                              {(register_) &= ~(BIT(bit_));}
+#define GET_BIT(register_, bit_)                                (((register_) & (BIT(bit_))) != 0UL)
+
+#define SET_BITFIELD(register_, position_, mask_, pattern_)     {(register_) &= (mask_) << (position_); (register_) |= (pattern_) << (position_);}
+#define GET_BITFIELD(register_, position_, mask_)               (((register_) << (position_)) & (mask_))
+
+#endif
+
+#endif // HAL_H

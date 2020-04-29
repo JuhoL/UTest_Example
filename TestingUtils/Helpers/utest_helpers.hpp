@@ -31,7 +31,7 @@
 //----------------------------------------------------------------------------------------------------------------------------
 
 /// @brief Initialises FFF framework.
-#define INIT_MOCKS()                                                FFF_RESET_HISTORY()
+#define INIT_MOCKS()                                                FFF_RESET_HISTORY(); int calls = 0;
 
 /// @brief Gets a call count of given function.
 /// @param function_ - A Function name.
@@ -42,10 +42,20 @@
 /// @param position_ - A chronological position of the call starting from 0.
 #define MOCK_IS_CALLED_AT_POSITION(function_, position_)            (fff.call_history[(position_)] == (void*)(function_))
 
+/// @brief Checks thet next function called in sequence is the given function.
+/// Note: Must be used with INIT_MOCKS()!
+/// @param function_ - A Function name.
+#define MOCK_NEXT_CALLED_FUNCTION_IS(function_)                     (MOCK_IS_CALLED_AT_POSITION((function_), calls++))
+
 /// @brief Gives the last argument of a function.
 /// @param function_ - A Function name.
 /// @param arg_ - An argument index, where 0 is the first argument.
 #define MOCK_LAST_ARG(function_, arg_)                              (function_##_fake.arg##arg_##_val)
+
+/// @brief Gives the last argument of a function.
+/// @param function_ - A Function name.
+/// @param arg_ - An argument index, where 0 is the first argument.
+#define MOCK_ARG_HISTORY(function_, arg_, order_)                   (function_##_fake.arg##arg_##_history[(order_)])
 
 /// @brief Sets a return value for a function.
 /// @param function_ - A Function name.
@@ -63,17 +73,38 @@
 /// @param fake_ - A function to be called in place of the actual function.
 #define MOCK_SET_CUSTOM_FAKE(function_, fake_)                      {function_##_fake.custom_fake = (fake_);}
 
+/// @brief This macro is used to check that no UTILS_ASSERT failures were triggered.
+#define NO_ASSERT_ERRORS                                            (MOCK_CALLS(System_RaiseError) == 0)
+
+/// @brief This macro is used to check that UTILS_ASSERT failure was triggered.
+#define ASSERT_ERROR                                                (MOCK_CALLS(System_RaiseError) == 1)
+
+/// @brief This macro is used to check the error type of assert failure.
+#define ASSERT_ERROR_TYPE_IS(type_)                                 (MOCK_LAST_ARG(System_RaiseError, 0) == (type_))
+
+/// @brief This macro is used to get array length.
+#define ARRAY_LENGTH(array_, type_)                                 (sizeof(array_)/sizeof(type_))
+
 //-----------------------------------------------------------------------------------------------------------------------------
 // Random Number Functions
 //----------------------------------------------------------------------------------------------------------------------------
 
+namespace UTestHelper
+{
+
 /// @brief Initialises the random number generator.
-void UTestHelper_InitRandom(void);
+void InitRandom(void);
 
 /// @brief Gets a random integer
 /// @param min - A minimum value included in the range.
 /// @param max - A maximum value excluded from the range.
 /// @return A random integer in range [min, max[
-int UTestHelper_GetRandomInt(int min, int max);
+int GetRandomInt(int min, int max);
+
+/// @brief Gets a random true or false
+/// @return A random true or false
+bool GetRandomBool(void);
+
+} // namespace UTestHelper
 
 #endif // UTEST_HELPERS_HPP

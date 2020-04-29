@@ -35,15 +35,25 @@
 // Function Definitions
 //-----------------------------------------------------------------------------------------------------------------------------
 
-void UTestHelper_InitRandom(void)
+namespace UTestHelper
+{
+
+void InitRandom(void)
 {
     srand(time(NULL));
     return;
 }
 
-int UTestHelper_GetRandomInt(int min, int max)
+int GetRandomInt(int min, int max)
 {
     int range = max - min;
     int random = rand() % range;
     return random + min;
 }
+
+bool GetRandomBool(void)
+{
+    return ((rand() % 2) == 0);
+}
+
+} // namespace UTestHelper

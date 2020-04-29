@@ -17,64 +17,37 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    adc.h
+//! @file    utils.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    18 Apr 2020
+//! @date    28 Apr 2020
 //! 
-//! @brief   This is an simplified example of an ADC module.
+//! @brief   These are utility macros.
 
-#ifndef ADC_H
-#define ADC_H
+#ifndef UTILS_H
+#define UTILS_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include "types.h"
+#include "system.h"
 
 //-----------------------------------------------------------------------------------------------------------------------------
-// Typedefs
+// Macros
 //-----------------------------------------------------------------------------------------------------------------------------
 
-/// @brief A function pointer type for ADC callbacks.
-/// Parameter is the ADC result.
-typedef void (*AdcCallback_t)(uint16_t);
+#ifdef RELEASE
+#define UTILS_ASSERT_VOID(_condition, _error)
+#define UTILS_ASSERT(_condition, _error, returnValue_)
+#else
+#define UTILS_ASSERT_VOID(_condition, _error)               {if (!(_condition)) {System_RaiseError(_error); return;}}
+#define UTILS_ASSERT(_condition, _error, returnValue_)      {if (!(_condition)) {System_RaiseError(_error); return (returnValue_);}}
+#endif
 
-/// @brief An ADC channel enum
-typedef enum
-{
-    ADC0 = 0,   //!< ADC channel 0
-    ADC1,       //!< ADC channel 1
-    ADC2        //!< ADC channel 2
-} AdcChannel_t;
+/// @brief This macro is used to get array length.
+#define UTILS_ARRAY_LENGTH(array_, type_)     (sizeof(array_)/sizeof(type_))
 
-/// @brief ADC channel resolution
-typedef enum
-{
-    ADC_RES_12_BIT = 0, //!< 12-bit resolution
-    ADC_RES_10_BIT,     //!< 10-bit resolution
-    ADC_RES_8_BIT       //!< 8-bit resolution
-} AdcResolution_t;
+/// @brief A simple helper macro for dividing and rounding integers.
+#define UTILS_DIVIDE_AND_ROUND(a, b)          (((a) + ((b) >> 1))/(b))
 
-/// @brief ADC configuration struct
-typedef struct
-{
-    AdcChannel_t channel;       //!< A channel selector
-    AdcResolution_t resolution; //!< A channel resolution
-    AdcCallback_t Callback;     //!< A callback for passing results.
-} AdcConfig_t;
-
-//-----------------------------------------------------------------------------------------------------------------------------
-// Function Prototypes
-//-----------------------------------------------------------------------------------------------------------------------------
-
-/// @brief This function initialises an ADC channel based on the configuration struct.
-/// @param pConfig - A pointer to the configuration struct.
-void HalAdc_SetConfiguration(const AdcConfig_t* pConfig);
-
-/// @brief This function starts a conversion of a given channel.
-/// @param channel - A channel to convert.
-/// @return Returns a corresponding error code. See types.h.
-Error_t HalAdc_StartConversion(AdcChannel_t channel);
-
-#endif // ADC_H
+#endif // UTILS_H

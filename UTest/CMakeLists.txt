@@ -11,3 +11,4 @@ include(CTest)
 include(Catch.cmake)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../Sources/Supervisor/tests/utest_supervisor.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../Sources/HAL/tests/utest_gpio.cmake)

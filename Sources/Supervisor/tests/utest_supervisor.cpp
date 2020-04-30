@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------------------------------------------------------
-// Copyright (c) 2019 Juho Lepistö
+// Copyright (c) 2020 Juho Lepistö
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 // documentation files (the "Software"), to deal in the Software without restriction, including without 
@@ -19,7 +19,7 @@
 
 //! @file    utest_supervisor.cpp
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    13 May 2019
+//! @date    13 May 2020
 //! 
 //! @brief   These are example unit tests for utest_supervisor.c
 //! 

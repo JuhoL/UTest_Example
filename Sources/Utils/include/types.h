@@ -43,13 +43,14 @@
     #define staticv static
 #endif
 
+/// @brief This is a general error enum.
 typedef enum
 {
-    ERROR_OK = 0,
-    ERROR_RESOURCE_NOT_AVAILABLE,
-    ERROR_NOT_ENOUGH_RESOURCES,
-    ERROR_INVALID_ACTION,
-    ERROR_PERIPHERAL_FAILURE
+    ERROR_OK = 0,                       //!< No errors.
+    ERROR_RESOURCE_NOT_AVAILABLE,       //!< The resource, e.g. peripheral, is not available.
+    ERROR_NOT_ENOUGH_RESOURCES,         //!< Not enough resources, e.g. free buffers.
+    ERROR_INVALID_ACTION,               //!< The action is invalid, e.g. attempting to use uninitialised functionality.
+    ERROR_PERIPHERAL_FAILURE            //!< The peripheral has failed.
 } Error_t;
 
 #endif // TYPES_H

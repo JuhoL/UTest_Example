@@ -36,6 +36,7 @@
 // Macros
 //-----------------------------------------------------------------------------------------------------------------------------
 
+// Asserts shall be active only on non-release builds.
 #ifdef RELEASE
 #define UTILS_ASSERT_VOID(_condition, _error)
 #define UTILS_ASSERT(_condition, _error, returnValue_)

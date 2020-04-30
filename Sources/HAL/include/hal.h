@@ -45,17 +45,16 @@
 
 #ifdef UNIT_TEST
 
+// When unit testing, replace the simple macros with mockable functions. See hal_mock.h for details.
 extern void BitMock_Set(uint32_t* pRegister_, uint32_t bit_);
 extern void BitMock_Clear(uint32_t* pRegister_, uint32_t bit_);
 extern bool BitMock_Get(uint32_t* pRegister_, uint32_t bit_);
-
 extern void BitMock_SetBitfield(uint32_t* pRegister_, uint32_t position_, uint32_t mask_, uint32_t pattern_);
 extern uint32_t BitMock_GetBitfield(uint32_t* pRegister_, uint32_t position_, uint32_t mask_);
 
 #define SET_BIT(register_, bit_)                                BitMock_Set(&(register_), (bit_))
 #define CLEAR_BIT(register_, bit_)                              BitMock_Clear(&(register_), (bit_))
 #define GET_BIT(register_, bit_)                                BitMock_Get(&(register_), (bit_))
-
 #define SET_BITFIELD(register_, position_, mask_, pattern_)     BitMock_SetBitfield(&(register_), (position_), (mask_), (pattern_))
 #define GET_BITFIELD(register_, position_, mask_)               BitMock_GetBitfield(&(register_), (position_), (mask_))
 
@@ -64,7 +63,6 @@ extern uint32_t BitMock_GetBitfield(uint32_t* pRegister_, uint32_t position_, ui
 #define SET_BIT(register_, bit_)                                {(register_) |= BIT(bit_);}
 #define CLEAR_BIT(register_, bit_)                              {(register_) &= ~(BIT(bit_));}
 #define GET_BIT(register_, bit_)                                (((register_) & (BIT(bit_))) != 0UL)
-
 #define SET_BITFIELD(register_, position_, mask_, pattern_)     {(register_) &= (mask_) << (position_); (register_) |= (pattern_) << (position_);}
 #define GET_BITFIELD(register_, position_, mask_)               (((register_) << (position_)) & (mask_))
 

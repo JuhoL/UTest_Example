@@ -194,6 +194,7 @@ SCENARIO ("Supervision is started", "[supervisor]")
 
 SCENARIO ("Supervision start fails", "[supervisor][error_handling]")
 {
+    INIT_MOCKS();
     SCHEDULER_MOCK_RESET();
 
     GIVEN ("the module is initialised")
@@ -272,6 +273,7 @@ SCENARIO ("Supervision is stopped", "[supervisor]")
 
 SCENARIO ("Supervision stop fails", "[supervisor][error_handling]")
 {
+    INIT_MOCKS();
     SCHEDULER_MOCK_RESET();
 
     GIVEN ("the module is initialised")

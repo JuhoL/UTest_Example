@@ -45,7 +45,7 @@
 #define SUPERVISOR_ALARM_PORT           portC   //!< A supervisor alarm GPIO port.
 #define SUPERVISOR_ALARM_PIN_NUMBER     5U      //!< A supervisor alarm GPIO pin number.
 
-#define SAMPLE_LIMIT                    10U     //<! Number of samples per average. Totals in 100ms * 8 = 800ms per average.
+#define SAMPLE_LIMIT                    10U     //<! Number of samples per average. Totals in 100ms * 10 = 1000ms per average.
 #define ADC_MAX                         0xFFFUL //<! Maximum ADC value.
 #define SUPERVISOR_VOLTAGE_AT_MAX_ADC   2000UL  //<! Supervised voltage in 0.01 resolution at maximum ADC value.
 #define SUPERVISOR_UV_LIMIT             1050U   //<! Voltage limit for undervoltage

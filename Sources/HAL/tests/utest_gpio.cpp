@@ -87,10 +87,10 @@ SCENARIO ("GPIO configuration is get", "[hal][gpio]")
     HAL_MOCK_RESET();
 
     uint32_t aGetBitfieldReturns[] = {0x1, 0x2, 0x0, 0x8};
-    MOCK_SET_RETURN_VALUE_SEQUENCE(BitMock_GetBitfield, aGetBitfieldReturns, ARRAY_LENGTH(aGetBitfieldReturns, uint32_t));
+    MOCK_SET_RETURN_VALUE_SEQUENCE(GET_BITFIELD_MOCK, aGetBitfieldReturns, ARRAY_LENGTH(aGetBitfieldReturns, uint32_t));
 
     bool aGetBitReturns[] = {true};
-    MOCK_SET_RETURN_VALUE_SEQUENCE(BitMock_Get, aGetBitReturns, ARRAY_LENGTH(aGetBitReturns, bool));
+    MOCK_SET_RETURN_VALUE_SEQUENCE(GET_BIT_MOCK, aGetBitReturns, ARRAY_LENGTH(aGetBitReturns, bool));
 
     GIVEN ("a GPIO struct is created for a random port and pin")
     {
@@ -109,49 +109,49 @@ SCENARIO ("GPIO configuration is get", "[hal][gpio]")
                 {
                     GPIO_TypeDef* registers = Helper_GetCorrespondingGpioStruct(gpio.pin.port);
 
-                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_GetBitfield));
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 0, 0) == &registers->MODER);
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 1, 0) == (gpio.pin.number * GPIO_MODER_MODER1_Pos));
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 2, 0) == GPIO_MODER_MODER0_Msk);
+                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(GET_BITFIELD_MOCK));
+                    REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 0, 0) == &registers->MODER);
+                    REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 1, 0) == (gpio.pin.number * GPIO_MODER_MODER1_Pos));
+                    REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 2, 0) == GPIO_MODER_MODER0_Msk);
                     REQUIRE (gpio.mode == output);
 
                     AND_THEN ("the open drain status shall be read")
                     {
-                        REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_Get));
-                        REQUIRE (MOCK_ARG_HISTORY(BitMock_Get, 0, 0) == &registers->OTYPER);
-                        REQUIRE (MOCK_ARG_HISTORY(BitMock_Get, 1, 0) == gpio.pin.number);
+                        REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(GET_BIT_MOCK));
+                        REQUIRE (MOCK_ARG_HISTORY(GET_BIT_MOCK, 0, 0) == &registers->OTYPER);
+                        REQUIRE (MOCK_ARG_HISTORY(GET_BIT_MOCK, 1, 0) == gpio.pin.number);
                         REQUIRE (gpio.isOpenDrain == true);
 
                         AND_THEN ("the speed shall be read")
                         {
-                            REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_GetBitfield));
-                            REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 0, 1) == &registers->OSPEEDR);
-                            REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 1, 1) == (gpio.pin.number * GPIO_OSPEEDR_OSPEED1_Pos));
-                            REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 2, 1) == GPIO_OSPEEDR_OSPEED0_Msk);
+                            REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(GET_BITFIELD_MOCK));
+                            REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 0, 1) == &registers->OSPEEDR);
+                            REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 1, 1) == (gpio.pin.number * GPIO_OSPEEDR_OSPEED1_Pos));
+                            REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 2, 1) == GPIO_OSPEEDR_OSPEED0_Msk);
                             REQUIRE (gpio.speed == high);
 
                             AND_THEN ("the pull-up status shall be read")
                             {
-                                REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_GetBitfield));
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 0, 2) == &registers->PUPDR);
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 1, 2) == (gpio.pin.number * GPIO_PUPDR_PUPD1_Pos));
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 2, 2) == GPIO_PUPDR_PUPD0_Msk);
+                                REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(GET_BITFIELD_MOCK));
+                                REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 0, 2) == &registers->PUPDR);
+                                REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 1, 2) == (gpio.pin.number * GPIO_PUPDR_PUPD1_Pos));
+                                REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 2, 2) == GPIO_PUPDR_PUPD0_Msk);
                                 REQUIRE (gpio.pull == floating);
 
                                 AND_THEN ("the AF configuration shall be read")
                                 {
-                                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_GetBitfield));
+                                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(GET_BITFIELD_MOCK));
                                     if (gpio.pin.number < 8)
                                     {
-                                        REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 0, 3) == &registers->AFR[0]);
-                                        REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 1, 3) == (gpio.pin.number * GPIO_AFRL_AFSEL1_Pos));
+                                        REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 0, 3) == &registers->AFR[0]);
+                                        REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 1, 3) == (gpio.pin.number * GPIO_AFRL_AFSEL1_Pos));
                                     }
                                     else
                                     {
-                                        REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 0, 3) == &registers->AFR[1]);
-                                        REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 1, 3) == ((gpio.pin.number - 8U) * GPIO_AFRH_AFSEL9_Pos));
+                                        REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 0, 3) == &registers->AFR[1]);
+                                        REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 1, 3) == ((gpio.pin.number - 8U) * GPIO_AFRH_AFSEL9_Pos));
                                     }
-                                    REQUIRE (MOCK_ARG_HISTORY(BitMock_GetBitfield, 2, 3) == GPIO_AFRL_AFSEL0_Msk);
+                                    REQUIRE (MOCK_ARG_HISTORY(GET_BITFIELD_MOCK, 2, 3) == GPIO_AFRL_AFSEL0_Msk);
                                     REQUIRE (gpio.alternateFunction == af8);
                                 }
                             }
@@ -231,66 +231,66 @@ SCENARIO ("GPIO configuration is set", "[hal][gpio]")
 
                 AND_THEN ("the clock of the port shall be enabled")
                 {
-                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_Set));
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Set, 0, 0) == &RCC->AHB1ENR);
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Set, 1, 0) == Helper_GetCorrespondingClockEnableBit(gpio.pin.port));
+                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(SET_BIT_MOCK));
+                    REQUIRE (MOCK_ARG_HISTORY(SET_BIT_MOCK, 0, 0) == &RCC->AHB1ENR);
+                    REQUIRE (MOCK_ARG_HISTORY(SET_BIT_MOCK, 1, 0) == Helper_GetCorrespondingClockEnableBit(gpio.pin.port));
 
                     AND_THEN ("the mode shall be set")
                     {
                         GPIO_TypeDef* registers = Helper_GetCorrespondingGpioStruct(gpio.pin.port);
 
-                        REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_SetBitfield));
-                        REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 0, 0) == &registers->MODER);
-                        REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 1, 0) == (gpio.pin.number * GPIO_MODER_MODER1_Pos));
-                        REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 2, 0) == GPIO_MODER_MODER0_Msk);
-                        REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 3, 0) == static_cast<uint32_t>(gpio.mode));
+                        REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(SET_BITFIELD_MOCK));
+                        REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 0, 0) == &registers->MODER);
+                        REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 1, 0) == (gpio.pin.number * GPIO_MODER_MODER1_Pos));
+                        REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 2, 0) == GPIO_MODER_MODER0_Msk);
+                        REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 3, 0) == static_cast<uint32_t>(gpio.mode));
 
                         AND_THEN ("the open drain status shall be set")
                         {
                             if (gpio.isOpenDrain)
                             {
-                                REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_Set));
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_Set, 0, 1) == &registers->OTYPER);
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_Set, 1, 1) == gpio.pin.number);
+                                REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(SET_BIT_MOCK));
+                                REQUIRE (MOCK_ARG_HISTORY(SET_BIT_MOCK, 0, 1) == &registers->OTYPER);
+                                REQUIRE (MOCK_ARG_HISTORY(SET_BIT_MOCK, 1, 1) == gpio.pin.number);
                             }
                             else
                             {
-                                REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_Clear));
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_Clear, 0, 0) == &registers->OTYPER);
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_Clear, 1, 0) == gpio.pin.number);
+                                REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(CLEAR_BIT_MOCK));
+                                REQUIRE (MOCK_ARG_HISTORY(CLEAR_BIT_MOCK, 0, 0) == &registers->OTYPER);
+                                REQUIRE (MOCK_ARG_HISTORY(CLEAR_BIT_MOCK, 1, 0) == gpio.pin.number);
                             }
 
                             AND_THEN ("the speed shall be set")
                             {
-                                REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_SetBitfield));
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 0, 1) == &registers->OSPEEDR);
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 1, 1) == (gpio.pin.number * GPIO_OSPEEDR_OSPEED1_Pos));
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 2, 1) == GPIO_OSPEEDR_OSPEED0_Msk);
-                                REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 3, 1) == static_cast<uint32_t>(gpio.speed));
+                                REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(SET_BITFIELD_MOCK));
+                                REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 0, 1) == &registers->OSPEEDR);
+                                REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 1, 1) == (gpio.pin.number * GPIO_OSPEEDR_OSPEED1_Pos));
+                                REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 2, 1) == GPIO_OSPEEDR_OSPEED0_Msk);
+                                REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 3, 1) == static_cast<uint32_t>(gpio.speed));
 
                                 AND_THEN ("the pull-up status shall be set")
                                 {
-                                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_SetBitfield));
-                                    REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 0, 2) == &registers->PUPDR);
-                                    REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 1, 2) == (gpio.pin.number * GPIO_PUPDR_PUPD1_Pos));
-                                    REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 2, 2) == GPIO_PUPDR_PUPD0_Msk);
-                                    REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 3, 2) == static_cast<uint32_t>(gpio.pull));
+                                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(SET_BITFIELD_MOCK));
+                                    REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 0, 2) == &registers->PUPDR);
+                                    REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 1, 2) == (gpio.pin.number * GPIO_PUPDR_PUPD1_Pos));
+                                    REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 2, 2) == GPIO_PUPDR_PUPD0_Msk);
+                                    REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 3, 2) == static_cast<uint32_t>(gpio.pull));
 
                                     AND_THEN ("the AF configuration shall be set")
                                     {
-                                        REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_SetBitfield));
+                                        REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(SET_BITFIELD_MOCK));
                                         if (gpio.pin.number < 8)
                                         {
-                                            REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 0, 3) == &registers->AFR[0]);
-                                            REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 1, 3) == (gpio.pin.number * GPIO_AFRL_AFSEL1_Pos));
+                                            REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 0, 3) == &registers->AFR[0]);
+                                            REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 1, 3) == (gpio.pin.number * GPIO_AFRL_AFSEL1_Pos));
                                         }
                                         else
                                         {
-                                            REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 0, 3) == &registers->AFR[1]);
-                                            REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 1, 3) == ((gpio.pin.number - 8U) * GPIO_AFRH_AFSEL9_Pos));
+                                            REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 0, 3) == &registers->AFR[1]);
+                                            REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 1, 3) == ((gpio.pin.number - 8U) * GPIO_AFRH_AFSEL9_Pos));
                                         }
-                                        REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 2, 3) == GPIO_AFRL_AFSEL0_Msk);
-                                        REQUIRE (MOCK_ARG_HISTORY(BitMock_SetBitfield, 3, 3) == static_cast<uint32_t>(gpio.alternateFunction));
+                                        REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 2, 3) == GPIO_AFRL_AFSEL0_Msk);
+                                        REQUIRE (MOCK_ARG_HISTORY(SET_BITFIELD_MOCK, 3, 3) == static_cast<uint32_t>(gpio.alternateFunction));
                                     }
                                 }
                             }
@@ -367,9 +367,9 @@ SCENARIO ("GPIO output state is set", "[hal][gpio]")
                 {
                     GPIO_TypeDef* registers = Helper_GetCorrespondingGpioStruct(pin.port);
                     
-                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_Set));
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Set, 0, 0) == &registers->BSRR);
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Set, 1, 0) == static_cast<uint32_t>(pin.number));
+                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(SET_BIT_MOCK));
+                    REQUIRE (MOCK_ARG_HISTORY(SET_BIT_MOCK, 0, 0) == &registers->BSRR);
+                    REQUIRE (MOCK_ARG_HISTORY(SET_BIT_MOCK, 1, 0) == static_cast<uint32_t>(pin.number));
                 }
             }
         }
@@ -386,9 +386,9 @@ SCENARIO ("GPIO output state is set", "[hal][gpio]")
                 {
                     GPIO_TypeDef* registers = Helper_GetCorrespondingGpioStruct(pin.port);
                     
-                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_Set));
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Set, 0, 0) == &registers->BSRR);
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Set, 1, 0) == static_cast<uint32_t>(pin.number) + GPIO_BSRR_BR0_Pos);
+                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(SET_BIT_MOCK));
+                    REQUIRE (MOCK_ARG_HISTORY(SET_BIT_MOCK, 0, 0) == &registers->BSRR);
+                    REQUIRE (MOCK_ARG_HISTORY(SET_BIT_MOCK, 1, 0) == static_cast<uint32_t>(pin.number) + GPIO_BSRR_BR0_Pos);
                 }
             }
         }
@@ -446,7 +446,7 @@ SCENARIO ("GPIO input state is read", "[hal][gpio]")
     HAL_MOCK_RESET();
 
     bool randomState = UTestHelper::GetRandomBool();
-    MOCK_SET_RETURN_VALUE(BitMock_Get, randomState);
+    MOCK_SET_RETURN_VALUE(GET_BIT_MOCK, randomState);
 
     GIVEN ("a GPIO pin struct is created with random pin")
     {
@@ -465,9 +465,9 @@ SCENARIO ("GPIO input state is read", "[hal][gpio]")
                 {
                     GPIO_TypeDef* registers = Helper_GetCorrespondingGpioStruct(pin.port);
                     
-                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_Get));
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Get, 0, 0) == &registers->IDR);
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Get, 1, 0) == static_cast<uint32_t>(pin.number));
+                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(GET_BIT_MOCK));
+                    REQUIRE (MOCK_ARG_HISTORY(GET_BIT_MOCK, 0, 0) == &registers->IDR);
+                    REQUIRE (MOCK_ARG_HISTORY(GET_BIT_MOCK, 1, 0) == static_cast<uint32_t>(pin.number));
 
                     REQUIRE (state == randomState);
                 }
@@ -535,7 +535,7 @@ SCENARIO ("GPIO output state is read", "[hal][gpio]")
     HAL_MOCK_RESET();
 
     bool randomState = UTestHelper::GetRandomBool();
-    MOCK_SET_RETURN_VALUE(BitMock_Get, randomState);
+    MOCK_SET_RETURN_VALUE(GET_BIT_MOCK, randomState);
 
     GIVEN ("a GPIO pin struct is created with random pin")
     {
@@ -554,9 +554,9 @@ SCENARIO ("GPIO output state is read", "[hal][gpio]")
                 {
                     GPIO_TypeDef* registers = Helper_GetCorrespondingGpioStruct(pin.port);
                     
-                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(BitMock_Get));
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Get, 0, 0) == &registers->ODR);
-                    REQUIRE (MOCK_ARG_HISTORY(BitMock_Get, 1, 0) == static_cast<uint32_t>(pin.number));
+                    REQUIRE (MOCK_NEXT_CALLED_FUNCTION_IS(GET_BIT_MOCK));
+                    REQUIRE (MOCK_ARG_HISTORY(GET_BIT_MOCK, 0, 0) == &registers->ODR);
+                    REQUIRE (MOCK_ARG_HISTORY(GET_BIT_MOCK, 1, 0) == static_cast<uint32_t>(pin.number));
 
                     REQUIRE (state == randomState);
                 }

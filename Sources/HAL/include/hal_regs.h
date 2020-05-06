@@ -17,50 +17,38 @@
 // IN THE SOFTWARE.
 //-----------------------------------------------------------------------------------------------------------------------------
 
-//! @file    hal_mock.h
+//! @file    hal_regs.h
 //! @author  Juho Lepistö juho.lepisto(a)gmail.com
-//! @date    18 Apr 2020
+//! @date    13 Apr 2020
 //! 
-//! @brief   This is an example of an HAL module mocks.
+//! @brief   This is an example of a HAL register access interface.
 
-#ifndef HAL_MOCK_H
-#define HAL_MOCK_H
+#ifndef HAL_REG_H
+#define HAL_REG_H
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Include Dependencies
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#include "fff.h"
-
-extern "C" {
-#include "hal.h"
-}
-
-//-----------------------------------------------------------------------------------------------------------------------------
-// Function Mocks
-//-----------------------------------------------------------------------------------------------------------------------------
-
-FAKE_VALUE_FUNC(uint32_t, REG_READ_MOCK, uint32_t*);
-FAKE_VOID_FUNC(REG_WRITE_MOCK, uint32_t*, uint32_t);
-FAKE_VOID_FUNC(SET_BIT_MOCK, uint32_t*, uint32_t);
-FAKE_VOID_FUNC(CLEAR_BIT_MOCK, uint32_t*, uint32_t);
-FAKE_VALUE_FUNC(bool, GET_BIT_MOCK, uint32_t*, uint32_t);
-FAKE_VOID_FUNC(SET_BITFIELD_MOCK, uint32_t*, uint32_t, uint32_t, uint32_t);
-FAKE_VALUE_FUNC(uint32_t, GET_BITFIELD_MOCK, uint32_t*, uint32_t, uint32_t);
+#include "types.h"
 
 //-----------------------------------------------------------------------------------------------------------------------------
 // Helper Macros
 //-----------------------------------------------------------------------------------------------------------------------------
 
-#define HAL_MOCK_RESET() \
+#define BIT_(position_)                                         (1UL << (position_))
+#define REG_READ_(register_)                                    (register_)
+#define REG_WRITE_(register_, value_)                           {(register_) = (value_);}
+#define SET_BIT_(register_, bit_)                               {(register_) |= BIT_(bit_);}
+#define CLEAR_BIT_(register_, bit_)                             {(register_) &= ~(BIT_(bit_));}
+#define GET_BIT_(register_, bit_)                               (((register_) & (BIT_(bit_))) != 0UL)
+#define SET_BITFIELD_(register_, position_, mask_, pattern_) \
 { \
-    RESET_FAKE(REG_READ_MOCK); \
-    RESET_FAKE(REG_WRITE_MOCK); \
-    RESET_FAKE(SET_BIT_MOCK); \
-    RESET_FAKE(CLEAR_BIT_MOCK); \
-    RESET_FAKE(GET_BIT_MOCK); \
-    RESET_FAKE(SET_BITFIELD_MOCK); \
-    RESET_FAKE(GET_BITFIELD_MOCK); \
+    uint32_t regTemp_ = (register_); \
+    regTemp_ &= (mask_) << (position_); \
+    regTemp_ |= (pattern_) << (position_); \
+    (register_) = regTemp; \
 }
+#define GET_BITFIELD_(register_, position_, mask_)              (((register_) << (position_)) & (mask_))
 
-#endif // HAL_MOCK_H
+#endif // HAL_REG_H
